@@ -61,6 +61,7 @@ except chromadb.errors.NotFoundError:
 # 2. Goldfragen auswerten
 
 hits = 0
+reciprocal_ranks = []
 
 for item in GOLD_QUESTIONS:
     question = item["question"]
@@ -80,26 +81,23 @@ for item in GOLD_QUESTIONS:
 
     found_ids = results["ids"][0]
 
+    
+
+    hit = gold_chunk in found_ids
+    rr = 0.0
+    if hit:
+        hits += 1
+        rank = found_ids.index(gold_chunk) + 1
+        rr = 1 / rank
+    
+    reciprocal_ranks.append(rr)
+
     print("\nFRAGE:", question)
     print("Erwartet:", gold_chunk)
     print("Gefunden:", found_ids)
+    print(f"Hit@{TOP_K}:", int(hit))
+    print(f"RR@{TOP_K}:", rr)
 
-    # TODO 1:
-    # Prüfe, ob gold_chunk in found_ids enthalten ist.
-    #
-    # Speichere das Ergebnis als Boolean in hit.
-    #
-    # Tipp: Verwende den Operator in.
-
-    # hit = ...
-
-    # TODO 2:
-    # Wenn hit True ist, erhöhe hits um 1.
-
-    # if hit:
-    #     ...
-
-    # print(f"Hit@{TOP_K}:", int(hit))
 
 
 # 3. Gesamtergebnis
@@ -109,24 +107,10 @@ print("RETRIEVAL-EVALUATION")
 print("=" * 60)
 
 print("Goldfragen:", len(GOLD_QUESTIONS))
-
-# TODO 3:
-# Berechne die Hit-Rate.
-#
-# Formel:
-# Erfolgreiche Fragen / Anzahl aller Goldfragen
-
-# hit_rate = ...
+hit_rate = hits / len(GOLD_QUESTIONS)
+mrr = sum(reciprocal_ranks) / len(GOLD_QUESTIONS)
 
 # print("Erfolgreich:", hits)
-# print(f"Hit@{TOP_K}: {hit_rate:.1%}")
+print(f"Hit-Range@{TOP_K}: {hit_rate:.1%}")
+print(f"MRR@{TOP_K}: {mrr:.3f}")
 
-
-# 4. Experiment
-
-# Verändere TOP_K zwischen 1 und 3.
-# Wie verändert sich die Hit-Rate?
-#
-# Diskussionsfrage:
-# Reicht Hit@3 aus, um die Qualität eines
-# RAG-Systems zuverlässig zu beurteilen?

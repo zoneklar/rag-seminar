@@ -87,54 +87,56 @@ def dense_search(collection, client, question, top_k=3):
 
 
 def build_context(hits):
+    texte = []
 
-    # TODO 1:
-    # Verbinde die gefundenen Chunks zu einem Kontext.
-    #
-    # Jeder Chunk soll enthalten:
-    #
-    # chunk ID
-    # Quelle: Dateiname
-    # Chunk-Text
-    #
-    # Trenne die Chunks durch zwei Zeilenumbrüche.
-    #
-    # Tipp:
-    # "\n\n".join(...)
-    #
-    # Der Dateiname steht in:
-    # hit["metadata"]["source"]
-    #
-    # Der Text steht in:
-    # hit["text"]
+    for hit in hits:
+        chunk_id = hit["id"]
+        source = hit["metadata"]["source"]
+        text = hit["text"]
 
-    return ""
+        texte.append(
+            f"Chunk-ID: {chunk_id}\n"
+            f"Quelle: {source}\n"
+            f"{text}\n"
+        )
+
+    
+    return "\n\n".join(texte)
 
 
 # 4. Antwort generieren
 
 
 def answer(client, question, context):
+    """
+    Übergibt Kontext und Frage an das Sprachmodell.
 
-    # TODO 2:
-    # Erzeuge eine Antwort mit der OpenAI Responses API.
-    #
-    # Modell: CHAT_MODEL
-    #
-    # Übergib:
-    # instructions=INSTRUCTIONS
-    #
-    # input soll den Kontext und die Frage enthalten:
-    #
-    # KONTEXT:
-    # ...
-    #
-    # FRAGE:
-    # ...
-    #
-    # Gib anschließend response.output_text zurück.
+    Das Modell erhält zwei unterschiedliche Informationen:
 
-    return ""
+    instructions:
+        Regeln für die Antwortgenerierung.
+
+    input:
+        Den gefundenen Kontext und die Benutzerfrage.
+
+    Entscheidend:
+    Das Modell besitzt weiterhin sein vortrainiertes Wissen.
+
+    Wir fordern es auf, ausschließlich den Kontext zu
+    verwenden. Technisch verhindern können wir die
+    Verwendung anderen Wissens damit nicht.
+
+    Außerdem kann das Modell Informationen im Kontext
+    falsch interpretieren oder unzulässige Schlüsse ziehen.
+    """
+
+    response = client.responses.create(
+        model=CHAT_MODEL,
+        instructions=INSTRUCTIONS,
+        input=f"KONTEXT:\n{context}\n\nFRAGE:\n{question}"
+    )
+
+    return response.output_text
 
 
 # 5. Hauptprogramm
@@ -169,21 +171,13 @@ def main():
         for hit in hits:
             print(" ", hit["metadata"]["source"])
 
-        # TODO 1:
-        # Aktiviere den Kontextaufbau.
+        context = build_context(hits)
+        print("\nKONTEXT:")
+        print(context)
 
-        # context = build_context(hits)
-        #
-        # print("\nKONTEXT:")
-        # print(context)
-
-        # TODO 2:
-        # Aktiviere die Antwortgenerierung.
-
-        # result = answer(client, question, context)
-        #
-        # print("\nANTWORT:")
-        # print(result)
+        result = answer(client, question, context)
+        print("\nANTWORT:")
+        print(result)
 
     print("\n" + "=" * 60)
     print("Ein Grounding-Prompt garantiert keine Faktentreue.")

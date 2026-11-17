@@ -25,6 +25,7 @@ from pathlib import Path
 import chromadb
 from dotenv import load_dotenv
 from openai import OpenAI
+from sentence_transformers import CrossEncoder
 
 # 1. Konfiguration
 
@@ -74,7 +75,7 @@ def dense_search(collection, client, question, top_k=10):
     ]
 
 
-def rerank(reranker, question, hits):
+def rerank(reranker: CrossEncoder, question: str, hits: list[dict]):
     """
     Bewertet gefundene Chunks mit einem Cross-Encoder.
 
@@ -82,43 +83,24 @@ def rerank(reranker, question, hits):
     Die Treffer werden anschließend nach ihrem
     Relevanz-Score sortiert.
     """
+    pairs: list[tuple] = [
+        (question, hit["text"]) 
+        for hit in hits
+    ]
 
-    # TODO 1:
-    # Erstelle für jeden Chunk ein Paar aus Frage und Text.
-    #
-    # Beispiel:
-    # (question, hit["text"])
-    #
-    # Speichere alle Paare in einer Liste namens pairs.
+    scores = reranker.predict(pairs)
 
-    # pairs = ...
+    for hit, score in zip(hits, scores):
+        hit["score"] = float(score)
 
-    # TODO 2:
-    # Lass den Cross-Encoder alle Paare bewerten.
-    #
-    # Verwende:
-    # reranker.predict(pairs)
-    #
-    # Speichere das Ergebnis in scores.
-    #
-    # Ergänze anschließend bei jedem Treffer
-    # den berechneten Score unter hit["score"].
-    #
-    # Tipp:
-    # for hit, score in zip(hits, scores):
-    #     ...
+    ranked_hits = sorted(
+        hits,
+        key=lambda hit: hit["score"],
+        reverse=True,
+    )
 
-    # TODO 3:
-    # Sortiere hits absteigend nach hit["score"].
-    #
-    # Verwende sorted() mit key und reverse=True.
-    #
-    # Gib die sortierte Liste zurück.
+    return ranked_hits
 
-    return []
-
-
-# 4. Ausgabe
 
 
 def show_results(title, hits):
@@ -133,9 +115,6 @@ def show_results(title, hits):
             print(f"  {position:2}. {hit['id']}")
         else:
             print(f"  {position:2}. {hit['id']} Score: {score:.3f}")
-
-
-# 5. Hauptprogramm
 
 
 def main():
@@ -168,22 +147,17 @@ def main():
         hits,
     )
 
-    # TODO 1 bis 3:
-    # Aktiviere nach der Implementierung von rerank()
-    # den folgenden Programmteil.
+    reranker = CrossEncoder(RERANKER_MODEL)
+    ranked_hits = rerank(
+        reranker,
+        QUESTION,
+        hits,
+    )
 
-    # reranker = CrossEncoder(RERANKER_MODEL)
-    #
-    # ranked_hits = rerank(
-    #     reranker,
-    #     QUESTION,
-    #     hits,
-    # )
-    #
-    # show_results(
-    #     "NACH DEM RE-RANKING (Cross-Encoder)",
-    #     ranked_hits[:TOP_K_FINAL],
-    # )
+    show_results(
+        "NACH DEM RE-RANKING (Cross-Encoder)",
+        ranked_hits[:TOP_K_FINAL],
+    )
 
 
 if __name__ == "__main__":

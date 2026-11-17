@@ -66,6 +66,14 @@ A new client that assumes the same lifetime in Orbit 3.0
 may continue using an expired token.
 """.strip()
 
+RETRIEVAL_CONTEXT = """
+[D004_2] Webhook Delivery in Orbit 3.0
+
+## Webhook Lifetime
+
+An Orbit 3.0 webhook access token is valid for 60 minutes.
+Every token is renewed after 30 minutes.
+""".strip()
 
 # ============================================================
 # 4. Simulierte generierte Antwort
@@ -201,15 +209,6 @@ Overall correctness verdict:
 
 Use exactly one of these three overall verdicts.
 """.strip()
-
-    # TODO 1:
-    # Stelle die Eingabe für den Correctness-Judge zusammen.
-    # Benötigt werden:
-    #   GOLD QUESTION: QUESTION
-    #   EXPECTED ANSWER: GROUND_TRUTH
-    #   GENERATED ANSWER: GENERATED_ANSWER
-    #
-    # Wichtig: Goldfrage UND Gold-Antwort übergeben.
 
     evaluation_input = f"""
 GOLD QUESTION:

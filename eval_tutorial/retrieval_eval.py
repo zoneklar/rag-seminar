@@ -33,22 +33,43 @@ def hit_at_k(gold_ids: set[str], retrieved_ids: list[str], k: int) -> int:
 
 
 def precision_at_k(gold_ids: set[str], retrieved_ids: list[str], k: int) -> float:
-    # TODO 1:
-    # Berechne Precision@k.
-    # Formel: Anzahl relevanter Treffer unter den Top-k / k
-    # Tipp: Verwende gold_ids.intersection(retrieved_ids[:k]).
-    return 0.0
+    """
+    Welcher Anteil der Top-k-Treffer ist relevant?
+
+    Precision@k = relevante Treffer / k
+
+    Beispiel: Gold = {A, B}, Top-3 = [X, A, B]
+    Precision@3 = 2/3 = 66,7 %
+
+    Je höher die Precision, desto weniger irrelevante Treffer.
+    """
+    top_k_ids = retrieved_ids[:k]
+    relevant_ids = gold_ids.intersection(top_k_ids)
+    true_positvives = len(relevant_ids)
+    precision = true_positvives / k 
+    return precision
 
 
 def recall_at_k(gold_ids: set[str], retrieved_ids: list[str], k: int) -> float:
+    """
+    Welchen Anteil aller relevanten Gold-Chunks haben wir gefunden?
+
+    Recall@k = gefundene relevante Chunks / alle Gold-Chunks
+
+    Beispiel: Gold = {A, B, C, D}, Top-3 = [X, A, B]
+    Recall@3 = 2/4 = 50 %
+
+    Je höher der Recall, desto weniger relevante Chunks fehlen.
+    """
     if not gold_ids:
         return 0.0
 
-    # TODO 2:
-    # Berechne Recall@k.
-    # Formel: Anzahl gefundener relevanter Chunks / Anzahl aller Gold-Chunks
-    # Tipp: Verwende gold_ids.intersection(retrieved_ids[:k]).
-    return 0.0
+    top_k_ids = retrieved_ids[:k]
+    relevant_ids = gold_ids.intersection(top_k_ids)
+    true_positives = len(relevant_ids)
+    recall = true_positives / len(gold_ids)
+    return recall
+    
 
 
 def reciprocal_rank_at_k(gold_ids: set[str], retrieved_ids: list[str], k: int) -> float:
@@ -71,7 +92,7 @@ def main():
         if case_id not in SIMULATED_RANKINGS:
             raise ValueError(f"Kein simuliertes Ranking für {case_id}")
 
-        gold_ids = {item["chunk_id"] for item in case["evidence"]}
+        gold_ids: set[str] = {item["chunk_id"] for item in case["evidence"]}
         retrieved_ids = SIMULATED_RANKINGS[case_id]
 
         hit = hit_at_k(gold_ids, retrieved_ids, TOP_K)

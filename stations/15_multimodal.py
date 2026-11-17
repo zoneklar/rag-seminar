@@ -56,20 +56,31 @@ def describe_image(client, path):
 
     image_url = f"data:image/png;base64,{encoded_image}"
 
-    # TODO 1:
-    # Rufe die Responses API mit VISION_MODEL auf.
-    #
-    # Übergebe zwei Content-Elemente:
-    #
-    # 1. input_text:
-    #    Bitte um eine englische Beschreibung des Bildes.
-    #
-    # 2. input_image:
-    #    Verwende image_url.
-    #
-    # Gib response.output_text zurück.
-
-    return ""
+    response = client.responses.create(
+        model=VISION_MODEL,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "Describe this technical image for "
+                            "semantic search. Mention its purpose, "
+                            "important labels, error messages, "
+                            "metrics and visible relationships. "
+                            "Use English. Do not invent details."
+                        ),
+                    },
+                    {
+                        "type": "input_image",
+                        "image_url": image_url,
+                    },
+                ],
+            }
+        ],
+    )
+    return response.output_text
 
 
 # 3. Text-Embeddings
@@ -85,8 +96,6 @@ def embed_text(client, text):
 
     return response.data[0].embedding
 
-
-# 4. Bilder indexieren
 
 
 def index_images(chroma, client):
@@ -121,21 +130,16 @@ def index_images(chroma, client):
         print(description)
 
         vector = embed_text(client, description)
-
-        # TODO 2:
-        # Speichere den Datensatz mit collection.add().
-        #
-        # ID:         f"IMG_{number:03}"
-        # Dokument:   description
-        # Embedding:  vector
-        # Metadaten:  {"filename": filename}
-        #
-        # Übergib die Werte jeweils als Liste.
+        collection.add(
+            ids=[f"IMG_{number:03}"],
+            documents=[description],
+            embeddings=[vector],
+            metadatas=[{"filename": filename}],
+        )
 
     print(f"\nIndexiert: {collection.count()} Bilder")
 
 
-# 5. Bilder suchen
 
 
 def search_image(collection, client, question):
@@ -143,20 +147,19 @@ def search_image(collection, client, question):
 
     question_vector = embed_text(client, question)
 
-    # TODO 3:
-    # Suche mit collection.query() nach dem ähnlichsten
-    # Bildbeschreibung-Vektor.
-    #
-    # Verwende:
-    # query_embeddings=[question_vector]
-    # n_results=1
-    #
-    # Fordere documents, metadatas und distances an.
-    #
-    # Gib ID, Beschreibung, Dateiname und Distanz zurück.
+    results = collection.query(
+        query_embeddings=[question_vector],
+        n_results=1,
+        include=["documents", "metadatas", "distances"],
+    )
 
+    return {
+        "id": results["ids"][0][0],
+        "description": results["documents"][0][0],
+        "filename": results["metadatas"][0][0]["filename"],
+        "distance": results["distances"][0][0],
+    }
 
-# 6. Hauptprogramm
 
 
 def main():

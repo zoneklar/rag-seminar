@@ -1,4 +1,4 @@
-plan,devices_per_organization,retention_days,workspaces_per_organization
-Starter,100,90,1
-Team,1000,180,5
-Enterprise,10000,365,20
+plan,devices_per_organization,retention_days,workspaces_per_organization,description
+Starter,100,90,1,bla bla 
+Team,1000,180,5,bla bla 
+Enterprise,10000,365,20,bla bla 
